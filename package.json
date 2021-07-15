@@ -1,0 +1,35 @@
+{
+  "name": "@spope/glucose",
+  "version": "1.0.0",
+  "description": "Custom Component with local / global state management",
+  "main": "build/index.min.js",
+  "module": "build/index.esm.js",
+  "files": [
+    "build/index.esm.js"
+  ],
+  "scripts": {
+    "test": "node tests/index.js",
+    "build": "rollup --config"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Spope/glucose.git"
+  },
+  "keywords": [
+    "Custom Component",
+    "State",
+    "Router"
+  ],
+  "author": "Spope",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/Spope/glucose/issues"
+  },
+  "homepage": "https://github.com/Spope/glucose#readme",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "linkedom": "^0.9.6",
+    "rollup": "^2.52.2",
+    "uhtml": "^2.7.6"
+  }
+}

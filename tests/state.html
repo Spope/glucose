@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Test state</title>
+
+    </head>
+    <body>
+
+    <script type="module">
+        import {createComponent, createState, html} from '../build/index.esm.js';
+
+        let testState = createState('test', {
+            initialState: {
+                topLevel: {
+                    secondLevel: {
+                        thirdLevel: "Hello",
+                        other: "Hi"
+                    }
+                }
+            },
+
+            actions: {
+                test(value) {
+                    this.setState({
+                        'topLevel.secondLevel.thirdLevel': value
+                    });
+                }
+            }
+        });
+
+        // Works
+        const unsubscribe = testState.subscribe('topLevel.secondLevel.thirdLevel', (oldValue, newValue, nestedChange) => {
+            console.log('change', oldValue, newValue, nestedChange);
+        });
+        //testState.setState({'topLevel.secondLevel': 'ok'});
+
+        // Works
+        //testState.subscribe('topLevel', (oldValue, newValue, nestedChange) => {
+        //    console.log('change', oldValue, newValue, nestedChange);
+        //});
+        testState.actions.test('ok');
+        //testState.setState({'topLevel.secondLevel.thirdLevel': 'ok'});
+
+        console.log(testState.state);
+    </script>
+    </body>
+</html>

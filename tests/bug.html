@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Test component</title>
+
+    </head>
+    <body>
+
+    <elements-list></elements-list>
+
+    <script type="module">
+        import {createComponent, createState, html} from '../build/index.esm.js';
+
+        const store = createState('an.example.store', {
+          initialState: {
+            elementsOrder: ['first', 'second', 'third'],
+            elementsByName: {
+              first: {name: "first"},
+              second: {name: "second"},
+              third: {name: "third"},
+            }
+          },
+          actions: {
+              deleteElement(elementName) {
+                this.setState({
+                    elementsOrder: this.getState('elementsOrder').filter(eId => eId !== elementName),
+                    elementsByName: Object.fromEntries(
+                      Object.entries(this.getState('elementsByName')).filter(([key, e]) => e.name !== elementName)
+                    )
+                })
+              }
+          }
+        })
+
+        createComponent(
+          'elements-list',
+          {
+            mappedProperties() {
+                return {
+                    'an.example.store': ['elementsOrder']
+                }
+            },
+            render () {
+              console.log('Render list');
+              return html`
+                ${this.getState('elementsOrder', 'an.example.store').map(elementName => {
+                  return html.for({id: elementName})`
+                    <element-component element-name=${elementName}></element-component>
+                  `
+                })}
+              `
+            }
+          }
+        )
+
+        createComponent(
+          'element-component',
+          {
+            deleteElement() {
+              store.actions.deleteElement(this.getAttribute('element-name'));
+            },
+            render () {
+              console.log(`Render element ${this.getAttribute('element-name')}`);
+              return html`
+                <p>${this.getState('elementsByName', 'an.example.store')[this.getAttribute('element-name')].name} <button onclick=${e => this.deleteElement(e)}>X</button></p>
+              `
+            }
+          }
+        )
+
+    </script>
+
+    </body>
+</html>

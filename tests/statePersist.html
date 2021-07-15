@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Test state</title>
+
+    </head>
+    <body>
+
+    <script type="module">
+        import {createComponent, createState, html} from '../build/index.esm.js';
+
+        let testState = createState('test', {
+            initialState: {
+                topLevel: {
+                    value: ""
+                }
+            },
+
+            persist: 'localStorage',
+
+            actions: {
+                test(value) {
+                    this.setState({
+                        'topLevel.value': value
+                    });
+                }
+            }
+        });
+
+        createComponent('test-state-persist', {
+            mappedProperties() {
+                return {
+                    test: ["topLevel.value"]
+                }
+            },
+            render() {
+                return html`
+                    ${this.getState('topLevel.value', 'test')}
+
+                    <button onclick="${e => testState.actions.test('capo')}">Click</button>
+                `;
+            }
+        });
+
+
+    </script>
+    <test-state-persist></test-state-persist>
+    </body>
+</html>

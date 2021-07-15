@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Test component</title>
+
+    </head>
+    <body>
+
+    <test-component>
+        <div slot="second">Ca va ?</div>
+        <div slot="first">Coucou</div>
+    </test-component>
+
+    <script type="module">
+        import {createComponent, createState, html} from '../build/index.esm.js';
+
+        // Component state
+        createComponent('test-component', {
+            render() {
+                return html`
+                    <p>Voilà les slots :</p>
+                    <div>
+                        ${this.slots.first}
+                        ${this.slots.second}
+                    </div>
+                `;
+            }
+        });
+
+    </script>
+
+    </body>
+</html>
