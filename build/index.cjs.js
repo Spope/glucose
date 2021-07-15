@@ -239,7 +239,8 @@ class State {
      * @param {Object} newState Key value object
      */
     setState (newState) {
-
+        //console.log('%csetState%c : ', 'color: #60a3bc', 'color: black', newState);
+        //console.log(`%cDispatch%c : '%c${type}%c' Payload : `, 'color: #38ada9', 'color: black', 'font-weight: bold', 'font-weight: normal', payload);
         this.subscribedPaths.map(subscribedProperty => {
             return {
                 regEx: new RegExp('^' + subscribedProperty.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
