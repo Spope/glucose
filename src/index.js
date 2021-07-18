@@ -1,4 +1,4 @@
-import {addToRefreshList} from './componentRefreshList.js';
+import {addToRefreshList} from './refreshList.js';
 import createComponent from './component.js';
 import {createState, getAppState, deleteState} from './state.js';
 

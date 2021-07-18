@@ -1,3 +1,5 @@
+import clone from './clone.js';
+
 const getStateValue = function(state, stateProperty) {
 
     if (state == null || state == undefined) {
@@ -13,7 +15,7 @@ const getStateValue = function(state, stateProperty) {
         return ret !== undefined && ret !== null;
     });
 
-    return ret;
+    return clone(ret);
 }
 
 export default getStateValue;

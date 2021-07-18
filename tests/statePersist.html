@@ -10,6 +10,29 @@
     <script type="module">
         import {createComponent, createState, html} from '../build/index.esm.js';
 
+        class MyCustomStorage
+        {
+            constructor(storage) {
+                this.storage = storage;
+            }
+
+            saveState(name, state) {
+                this.storage.setItem(`${name}:custom`, typeof state === 'string' ? state : JSON.stringify(state))
+
+                return true;
+            }
+
+            loadState(name) {
+                const state = this.storage.getItem(`${name}:custom`)
+
+                return state ? JSON.parse(state) : undefined;
+            }
+
+            removeState(name) {
+                this.storage.removeItem(`${name}:custom`)
+            }
+        }
+
         let testState = createState('test', {
             initialState: {
                 topLevel: {
@@ -18,6 +41,7 @@
             },
 
             persist: 'localStorage',
+            //persist: new MyCustomStorage(window.localStorage),
 
             actions: {
                 test(value) {
@@ -29,7 +53,7 @@
         });
 
         createComponent('test-state-persist', {
-            mappedProperties() {
+            stateProperties() {
                 return {
                     test: ["topLevel.value"]
                 }
@@ -38,7 +62,7 @@
                 return html`
                     ${this.getState('topLevel.value', 'test')}
 
-                    <button onclick="${e => testState.actions.test('capo')}">Click</button>
+                    <button onclick="${e => testState.actions.test('capi')}">Click</button>
                 `;
             }
         });

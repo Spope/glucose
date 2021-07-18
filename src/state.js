@@ -7,9 +7,6 @@ const states = {};
 
 class State {
     constructor(options) {
-        if (options.name === undefined) {
-            throw new Error('State name is required');
-        }
         this.name    = options.name;
         this.persist = null;
 
@@ -78,18 +75,16 @@ class State {
      * @param {Object} newState Key value object
      */
     setState (newState) {
-        //console.log('%csetState%c : ', 'color: #60a3bc', 'color: black', newState);
-        //console.log(`%cDispatch%c : '%c${type}%c' Payload : `, 'color: #38ada9', 'color: black', 'font-weight: bold', 'font-weight: normal', payload);
-        const regeExSubscribedProperties = this.subscribedPaths.map(subscribedProperty => {
-            return {
-                regEx: new RegExp('^' + subscribedProperty.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
-                key: subscribedProperty
-            };
-        });
+        //const regeExSubscribedProperties = this.subscribedPaths.map(subscribedProperty => {
+            //return {
+                //regEx: new RegExp('^' + subscribedProperty.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+                //key: subscribedProperty
+            //};
+        //});
 
         for (const property in newState) {
             const oldValue = getStateValue(this.state, property);
-            const newValue = clone(newState[property]);
+            const newValue = newState[property];
 
             if (oldValue === newValue) continue;
 
@@ -143,11 +138,15 @@ class State {
      * Acces a state property, return a clone
      */
     getState (stateProperty) {
-        return clone(getStateValue(this.state, stateProperty));
+        return getStateValue(this.state, stateProperty);
     }
 }
 
 const createState = function(name, options) {
+    if (!name) {
+        throw new Error('State name is required');
+    }
+
     let state = getAppState(name);
     if (state) return state;
 

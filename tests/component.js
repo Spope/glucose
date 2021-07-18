@@ -18,7 +18,7 @@ module.exports = function() {
 
         const {createComponent, html} = require('../build/index.cjs.js');
 
-        let renderCallbackCall = 0;
+        let renderedCallbackCall = 0;
 
         createComponent('component-test', {
             initialState: {
@@ -32,8 +32,8 @@ module.exports = function() {
             changeState() {
                 this.setState({name: 'Tata'});
             },
-            renderCallback() {
-                renderCallbackCall++;
+            renderedCallback() {
+                renderedCallbackCall++;
             },
             render() {
                 return html`
@@ -54,11 +54,11 @@ module.exports = function() {
             console.assert(component1.innerHTML.indexOf('Hello Tata') !== -1, 'Initial state is changed');
         });
 
-        // Render prop update + renderCallback
+        // Render prop update + renderedCallback
         component1.setAttribute('test', 'Great');
         setTimeout(() => {
             console.assert(component1.innerHTML.indexOf('Attr : Great') !== -1, 'Attributes are working');
-            console.assert(renderCallbackCall === 2, 'Render callback is called');
+            console.assert(renderedCallbackCall === 2, 'Render callback is called');
         });
 
 

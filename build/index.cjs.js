@@ -95,7 +95,7 @@ const getStateValue = function(state, stateProperty) {
         return ret !== undefined && ret !== null;
     });
 
-    return ret;
+    return clone(ret);
 };
 
 /**
@@ -118,7 +118,7 @@ const loopThroughPropPath = function(statePart, stateProperty, value) {
     return statePart;
 };
 
-class StatePersist
+class DefaultStatePersist
 {
     constructor(storage) {
         this.storage = storage;
@@ -143,34 +143,45 @@ class StatePersist
 
 const persistors = {};
 
-const getStatePersist = function(type) {
+const getStatePersist = function(persistType) {
 
-    if (['localStorage', 'sessionStorage'].indexOf(type) === -1) {
-        console.error('Bad StatePersist type');
+    if (typeof persistType === 'object') {
+        if (
+            typeof persistType.saveState !== 'function'
+         || typeof persistType.loadState !== 'function'
+         || typeof persistType.removeState !== 'function'
+        ) {
+            console.error('Custom State persitence class is invalid');
+        }
+
+        return persistType;
     }
 
-    if (!persistors[type]) {
+
+    const authorizedTypes = ['localStorage', 'sessionStorage'];
+    if (authorizedTypes.indexOf(persistType) === -1) {
+        console.error('Bad StatePersist type, available types are ' + authorizedTypes.join(', '));
+    }
+
+    if (!persistors[persistType]) {
 
         let storage;
-        if (type === 'localStorage') {
+        if (persistType === 'localStorage') {
             storage = globalThis.localStorage;
         } else {
             storage = globalThis.sessionStorage;
         }
 
-        persistors[type] = new StatePersist(storage);
+        persistors[persistType] = new DefaultStatePersist(storage);
     }
 
-    return persistors[type];
+    return persistors[persistType];
 };
 
 const states = {};
 
 class State {
     constructor(options) {
-        if (options.name === undefined) {
-            throw new Error('State name is required');
-        }
         this.name    = options.name;
         this.persist = null;
 
@@ -239,18 +250,16 @@ class State {
      * @param {Object} newState Key value object
      */
     setState (newState) {
-        //console.log('%csetState%c : ', 'color: #60a3bc', 'color: black', newState);
-        //console.log(`%cDispatch%c : '%c${type}%c' Payload : `, 'color: #38ada9', 'color: black', 'font-weight: bold', 'font-weight: normal', payload);
-        this.subscribedPaths.map(subscribedProperty => {
-            return {
-                regEx: new RegExp('^' + subscribedProperty.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
-                key: subscribedProperty
-            };
-        });
+        //const regeExSubscribedProperties = this.subscribedPaths.map(subscribedProperty => {
+            //return {
+                //regEx: new RegExp('^' + subscribedProperty.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+                //key: subscribedProperty
+            //};
+        //});
 
         for (const property in newState) {
             const oldValue = getStateValue(this.state, property);
-            const newValue = clone(newState[property]);
+            const newValue = newState[property];
 
             if (oldValue === newValue) continue;
 
@@ -304,11 +313,15 @@ class State {
      * Acces a state property, return a clone
      */
     getState (stateProperty) {
-        return clone(getStateValue(this.state, stateProperty));
+        return getStateValue(this.state, stateProperty);
     }
 }
 
 const createState = function(name, options) {
+    if (!name) {
+        throw new Error('State name is required');
+    }
+
     let state = getAppState(name);
     if (state) return state;
 
@@ -1169,7 +1182,8 @@ let id = 0;
 
 const reservedProps = [
     // Glucose
-    'mappedProperties',
+    'stateProperties',
+    'renderedCallback',
     // CustomElement
     'constructor',
     'observedAttributes',
@@ -1189,7 +1203,7 @@ const createComponent = function(name, props) {
             super();
 
             //Unique Glucose Id for each component
-            this._gId = id++;
+            this._gId = `gId-${id++}`;
             this._setRoot();
             this._setSlots();
 
@@ -1207,9 +1221,9 @@ const createComponent = function(name, props) {
         }
         // Properties mapped to global state.
         // Properties here will be read from global state.
-        get mappedProperties() {
-            if (typeof props.mappedProperties == 'function') {
-                return props.mappedProperties.call(this);
+        get stateProperties() {
+            if (typeof props.stateProperties == 'function') {
+                return props.stateProperties.call(this);
             }
             return null;
         }
@@ -1221,21 +1235,17 @@ const createComponent = function(name, props) {
             this._initComponentState();
             this._bindStates();
             this._renderComponent();
-
             this._callLifecycleCallback('connectedCallback');
         }
         disconnectedCallback() {
-            this._callLifecycleCallback('disconnectedCallback');
-
             // Unbind mappedPoperties form global state.
             this.unsubscribeFromState.forEach(unsubscribe => unsubscribe());
             // if component is in refreshList removeIt.
             removeFromRefreshList(this._gId);
-
+            this._callLifecycleCallback('disconnectedCallback');
         }
         attributeChangedCallback(name, oldValue, newValue) {
-            this._askRender();
-
+            this._requestRender();
             this._callLifecycleCallback('attributeChangedCallback');
         }
 
@@ -1259,9 +1269,10 @@ const createComponent = function(name, props) {
             for (const property in newState) {
                 this._state = setStateValue(this._state, property, newState[property]);
             }
-            this._askRender();
+            this._requestRender();
         }
 
+        // Dispatch a custom event from the component.
         dispatch(type, data, options) {
             const baseOptions = {
                 bubbles: true,
@@ -1269,8 +1280,7 @@ const createComponent = function(name, props) {
                 composed: false
             };
             const eventOptions = Object.assign({}, baseOptions, options);
-
-            const event = globalThis.document.createEvent( 'CustomEvent' );
+            const event = globalThis.document.createEvent('CustomEvent');
             event.initCustomEvent(type,
                 eventOptions.bubbles,
                 eventOptions.cancelable,
@@ -1286,19 +1296,19 @@ const createComponent = function(name, props) {
         // Setup local state
         _initComponentState() {
             let localState = props.initialState;
-            if (localState == null) localState = Object.create(null);
-            this._state = Object.assign(Object.create(null), localState);
+            if (localState == null) this._state = Object.create(null);
+            else this._state = Object.assign(Object.create(null), localState);
         }
-        // Bind mappedProperties to global state.
-        // If one of these is updated, component will be added into ComponentRefreshList
+        // Bind stateProperties to global state.
+        // If one of these is updated, component will be added into refreshList
         _bindStates() {
             this.unsubscribeFromState = [];
-            const binding = this.mappedProperties;
+            const binding = this.stateProperties;
             for (const stateName in binding) {
                 const state = getAppState(stateName);
                 if (state === undefined) throw new Error(`State ${stateName} not found`);
                 binding[stateName].forEach(path => {
-                    this.unsubscribeFromState.push(state.subscribe(path, (oldValue, newValue) => this._askRender(oldValue, newValue)));
+                    this.unsubscribeFromState.push(state.subscribe(path, (oldValue, newValue) => this._requestRender(oldValue, newValue)));
                 });
             }
         }
@@ -1309,13 +1319,13 @@ const createComponent = function(name, props) {
             }
         }
         // Ask component to be re-rendered on next animation frame
-        _askRender(oldValue, newValue) {
+        _requestRender(oldValue, newValue) {
             addToRefreshList(this._gId, () => this._renderComponent());
         }
         _renderComponent() {
             render(this._root, this.render.call(this));
 
-            this._callLifecycleCallback('renderCallback');
+            this._callLifecycleCallback('renderedCallback');
         }
         _setRoot() {
             switch (props.root) {
@@ -1337,7 +1347,8 @@ const createComponent = function(name, props) {
             };
 
             if (children.length > 0) {
-                [...children].forEach(child => {
+                for (let i = 0; i < children.length; i++) {
+                    const child = children[i];
                     let name = 'default';
                     if (child.getAttribute && child.getAttribute('slot')) {
                         name = child.getAttribute('slot');
@@ -1345,7 +1356,7 @@ const createComponent = function(name, props) {
                     } else {
                         this.slots.default.push(child);
                     }
-                });
+                }
             }
         }
     }

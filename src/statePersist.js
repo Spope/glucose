@@ -1,4 +1,4 @@
-class StatePersist
+class BrowserStoragePersistor
 {
     constructor(storage) {
         this.storage = storage;
@@ -23,25 +23,39 @@ class StatePersist
 
 const persistors = {};
 
-const getStatePersist = function(type) {
+const getStatePersist = function(persistType) {
 
-    if (['localStorage', 'sessionStorage'].indexOf(type) === -1) {
-        console.error('Bad StatePersist type')
+    if (typeof persistType === 'object') {
+        if (
+            typeof persistType.saveState !== 'function'
+         || typeof persistType.loadState !== 'function'
+         || typeof persistType.removeState !== 'function'
+        ) {
+            console.error('Custom State persitence class is invalid');
+        }
+
+        return persistType;
     }
 
-    if (!persistors[type]) {
+
+    const authorizedTypes = ['localStorage', 'sessionStorage'];
+    if (authorizedTypes.indexOf(persistType) === -1) {
+        console.error('Bad StatePersist type, available types are ' + authorizedTypes.join(', '))
+    }
+
+    if (!persistors[persistType]) {
 
         let storage;
-        if (type === 'localStorage') {
+        if (persistType === 'localStorage') {
             storage = globalThis.localStorage;
         } else {
             storage = globalThis.sessionStorage;
         }
 
-        persistors[type] = new StatePersist(storage);
+        persistors[persistType] = new BrowserStoragePersistor(storage);
     }
 
-    return persistors[type];
+    return persistors[persistType];
 }
 
 export default getStatePersist;

@@ -39,7 +39,7 @@ module.exports = function() {
 
 
         createComponent('component-app-state', {
-            mappedProperties() {
+            stateProperties() {
                 return {
                     'component-app-state': ['topLevel.secondLevel.prop1']
                 }
