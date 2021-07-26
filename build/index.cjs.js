@@ -118,7 +118,7 @@ const loopThroughPropPath = function(statePart, stateProperty, value) {
     return statePart;
 };
 
-class DefaultStatePersist
+class BrowserStoragePersistor
 {
     constructor(storage) {
         this.storage = storage;
@@ -172,7 +172,7 @@ const getStatePersist = function(persistType) {
             storage = globalThis.sessionStorage;
         }
 
-        persistors[persistType] = new DefaultStatePersist(storage);
+        persistors[persistType] = new BrowserStoragePersistor(storage);
     }
 
     return persistors[persistType];

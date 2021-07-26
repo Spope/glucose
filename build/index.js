@@ -117,7 +117,7 @@ var glucose = (function (exports) {
         return statePart;
     };
 
-    class DefaultStatePersist
+    class BrowserStoragePersistor
     {
         constructor(storage) {
             this.storage = storage;
@@ -171,7 +171,7 @@ var glucose = (function (exports) {
                 storage = globalThis.sessionStorage;
             }
 
-            persistors[persistType] = new DefaultStatePersist(storage);
+            persistors[persistType] = new BrowserStoragePersistor(storage);
         }
 
         return persistors[persistType];

@@ -21,13 +21,13 @@ Usage :
 
 ### Components lyfecycle callback :
 
-    * constructor
-    * observedAttributes
-    * connectedCallback
-    * disconnectedCallback
-    * adoptedCallback
-    * attributeChangedCallback
-    * renderedCallback
+ * constructor
+ * observedAttributes
+ * connectedCallback
+ * disconnectedCallback
+ * adoptedCallback
+ * attributeChangedCallback
+ * renderedCallback
 
 
 ### Observed attributes :
@@ -35,7 +35,7 @@ Usage :
 ```javascript
     observedAttributes() {
         return [
-            'switch-state'
+            'attribute-name'
         ];
     }
 ```
@@ -44,7 +44,7 @@ Usage :
 
 #### Subscribe a component to a state property.
 
-See [Subscribe to a state change](#Subscribe to a state change) for subscribing logic.
+See [Subscribe to a state change](#subscribe-to-a-state-change) for subscribing logic.
 
 ```javascript
     stateProperties() {
